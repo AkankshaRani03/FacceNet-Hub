@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Face Recognition - AI Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f2ff 40%, #d4f1f4 100%);
+            position: relative;
+            overflow-x: hidden;
+            color: #2d3748;
+        }
+
+        .bg-elements {
+            position: fixed; inset: 0; z-index: 1; pointer-events: none;
+        }
+
+        .float-circle {
+            position: absolute; border-radius: 50%;
+            background: radial-gradient(circle, rgba(99,179,255,0.15), transparent);
+            animation: floatGentle 20s infinite ease-in-out;
+        }
+
+        .float-circle:nth-child(1) { width:220px; height:220px; top:8%; left:8%; animation-delay:0s; }
+        .float-circle:nth-child(2) { width:160px; height:160px; top:65%; right:12%; background: radial-gradient(circle, rgba(72,187,120,0.12), transparent); animation-delay:6s; }
+        .float-circle:nth-child(3) { width:110px; height:110px; bottom:18%; left:15%; background: radial-gradient(circle, rgba(147,51,234,0.1), transparent); animation-delay:11s; }
+        .float-circle:nth-child(4) { width:120px; height:120px; top:20%; right:25%; background: radial-gradient(circle, rgba(237,137,54,0.1), transparent); animation-delay:15s; }
+
+        @keyframes floatGentle {
+            0%,100% { transform:translateY(0) rotate(0deg); opacity:0.65; }
+            50% { transform:translateY(-30px) rotate(180deg); opacity:0.9; }
+        }
+
+        .wave-pattern {
+            position: absolute; bottom:0; left:0; width:100%; height:220px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 100' preserveAspectRatio='none'%3E%3Cpath d='M0,50 Q250,0 500,50 T1000,50 V100 H0 Z' fill='%23d4f1f4' opacity='0.4'/%3E%3C/svg%3E") bottom no-repeat;
+            background-size: cover; z-index:1;
+        }
+
+        .container {
+            position: relative; z-index:10; max-width:900px; margin:0 auto;
+            padding:3rem 1.5rem 5rem; display:flex; flex-direction:column; gap:3rem; text-align:center;
+        }
+
+        .header h1 {
+            font-size: clamp(2.8rem,7vw,4.5rem); font-weight:800;
+            background: linear-gradient(135deg, #4c51bf, #6366f1, #48bb78);
+            background-clip: text; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p { font-size:1.3rem; color:#4a5568; max-width:640px; margin:1rem auto; }
+
+        .section {
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(24px);
+            border-radius:28px; padding:2.8rem; box-shadow:0 20px 70px rgba(0,0,0,0.09);
+            border:1px solid rgba(255,255,255,0.35);
+            position: relative; overflow: hidden;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4c51bf, #63b3ed, #48bb78);
+        }
+
+        .upload-area {
+            border: 3px dashed #e2e8f0;
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            margin: 2rem 0;
+            background: rgba(255,255,255,0.6);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #48bb78;
+            background: rgba(72,187,120,0.08);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            background: linear-gradient(135deg, #48bb78, #68d391);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .custom-file-btn {
+            padding:18px 44px; font-size:1.1rem; font-weight:600; color:white;
+            background:linear-gradient(135deg,#48bb78,#68d391); border:none; border-radius:20px;
+            cursor:pointer; box-shadow:0 12px 36px rgba(72,187,120,0.3);
+            transition:all 0.35s ease; border: none; margin-top: 1rem;
+        }
+
+        .custom-file-btn:hover { 
+            transform:translateY(-4px); 
+            box-shadow:0 20px 50px rgba(72,187,120,0.45); 
+        }
+
+        #recognizeBtn {
+            padding:20px 48px; font-size:1.2rem; font-weight:700; color:white;
+            background:linear-gradient(135deg,#4c51bf,#63b3ed); border:none; border-radius:24px;
+            cursor:pointer; box-shadow:0 16px 44px rgba(76,81,191,0.3);
+            transition:all 0.4s cubic-bezier(0.4,0,0.2,1); margin:2rem 0;
+            letter-spacing: 0.5px; position: relative; overflow: hidden;
+        }
+
+        #recognizeBtn:hover { 
+            transform:translateY(-6px); 
+            box-shadow:0 24px 60px rgba(76,81,191,0.45); 
+        }
+
+        #recognizeBtn:disabled {
+            opacity: 0.6; cursor: not-allowed; transform: none;
+        }
+
+        #prediction {
+            min-height:180px; margin-top:2rem; padding:2.5rem;
+            background:rgba(255,255,255,0.92); border-radius:24px;
+            border:2px solid rgba(99,179,255,0.3); font-size:1.15rem; line-height:1.7;
+            box-shadow:0 12px 48px rgba(0,0,0,0.08); transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+        }
+
+        #prediction::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        }
+
+        #prediction.found { 
+            border-color:#48bb78; background:rgba(72,187,120,0.1); color:#2f855a; 
+        }
+        #prediction.found::before { background: linear-gradient(90deg, #48bb78, #68d391); }
+
+        #prediction.error { 
+            border-color:#f56565; background:rgba(245,101,101,0.1); color:#c53030; 
+        }
+        #prediction.error::before { background: #f56565; }
+
+        #prediction.info { 
+            border-color:#63b3ed; background:rgba(66,153,225,0.1); color:#2b6cb0; 
+        }
+        #prediction.info::before { background: linear-gradient(90deg, #4c51bf, #63b3ed); }
+
+        #prediction strong { color: inherit; font-weight: 700; }
+
+        .debug-info {
+            font-size: 0.85em; opacity: 0.8; margin-top: 1rem; padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.1); font-family: 'Courier New', monospace;
+        }
+
+        .back-btn {
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .back-btn button {
+            padding: 16px 32px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #4c51bf 0%, #63b3ed 100%);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(76, 81, 191, 0.25);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(76, 81, 191, 0.35);
+        }
+
+        .status-bar {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+            padding: 12px 20px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            font-size: 0.9rem; font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 2rem 1rem 4rem; }
+            .section { padding: 2rem 1.5rem; }
+            #prediction { padding: 2rem 1.5rem; font-size: 1rem; }
+        }
+
+        .loading {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="bg-elements">
+    <div class="float-circle"></div>
+    <div class="float-circle"></div>
+    <div class="float-circle"></div>
+    <div class="float-circle"></div>
+    <div class="wave-pattern"></div>
+</div>
+
+<div class="status-bar" id="statusBar">
+    <span id="modelStatus">Checking AI model...</span>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>Face Recognition</h1>
+        <p>Upload a photo or capture live video to let the system detect and recognize faces.</p>
+    </div>
+
+    <div class="section">
+        <h2 style="margin-bottom:1.5rem; color:#2d3748;">📸 Upload & Recognize</h2>
+        
+        <div class="upload-area" id="uploadArea">
+            
+            <p style="font-size:1.2rem; font-weight:600; margin-bottom:0.5rem; color:#4a5568;">
+                Drop photo here or click to browse
+            </p>
+            <p style="color:#718096; margin-bottom:1.5rem;">
+                JPG, PNG (Max 10MB) - Clear frontal faces work best
+            </p>
+            <label for="imageUpload" class="custom-file-btn">
+                Choose File
+            </label>
+            <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+        </div>
+
+        <div id="fileInfo" style="margin:1.5rem 0; color:#718096; min-height:1.5rem; font-size:1.1rem;"></div>
+
+        <button id="recognizeBtn" disabled>🔍 Select photo first</button>
+
+        <div id="prediction">
+            <div style="font-size:1.3rem; margin-bottom:1rem;">👆 Upload a photo and click "Recognize Face"</div>
+            
+        </div>
+    </div>
+
+    <div class="back-btn">
+        <a href="/" style="text-decoration: none;">
+            <button>← Back to Dashboard</button>
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const fileInput = document.getElementById('imageUpload');
+    const recognizeBtn = document.getElementById('recognizeBtn');
+    const resultDiv = document.getElementById('prediction');
+    const fileInfo = document.getElementById('fileInfo');
+    const uploadArea = document.getElementById('uploadArea');
+    const statusBar = document.getElementById('statusBar');
+    const modelStatus = document.getElementById('modelStatus');
+
+    try {
+        const response = await fetch('/api/debug-status');
+
+        if (response.ok) {
+            const info = await response.json();
+            modelStatus.innerHTML = `✅ Backend Connected | Model: ${info.model || 'unknown'} | DB: ${info.db_size || 0}`;
+            statusBar.style.background = 'rgba(72,187,120,0.95)';
+            window.dbSize = info.db_size || 0;  // Set global db size for later use
+        } else {
+            throw new Error('Bad response');
+        }
+    } catch(e) {
+        modelStatus.innerHTML = '❌ Backend offline';
+        statusBar.style.background = 'rgba(245,101,101,0.95)';
+        window.dbSize = 0;
+    }
+
+    // Update UI when file selected
+    function updateUI() {
+        const file = fileInput.files[0];
+        if (file) {
+            fileInfo.innerHTML = `✅ Selected: <strong>${file.name}</strong> (${(file.size/1024/1024).toFixed(1)}MB)`;
+            fileInfo.style.color = '#48bb78';
+            recognizeBtn.disabled = false;
+            recognizeBtn.innerHTML = '🚀 Recognize Face';
+        } else {
+            fileInfo.innerHTML = 'No file selected';
+            fileInfo.style.color = '#718096';
+            recognizeBtn.disabled = true;
+            recognizeBtn.innerHTML = '🔍 Select photo first';
+        }
+    }
+
+    fileInput.addEventListener('change', updateUI);
+
+    // Drag & drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        uploadArea.classList.add('dragover');
+    }
+
+    function unhighlight(e) {
+        uploadArea.classList.remove('dragover');
+    }
+
+    uploadArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateUI();
+        }
+    }
+
+    // 🔥 PERFECT RESULT DISPLAY FUNCTION
+    function setResult(message, type = 'info') {
+        resultDiv.innerHTML = message;
+        resultDiv.className = type;
+    }
+
+    // 🔥 ULTIMATE RECOGNITION FUNCTION
+    recognizeBtn.addEventListener('click', async function() {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Loading state
+        recognizeBtn.disabled = true;
+        recognizeBtn.innerHTML = '<div class="loading"></div>AI Analyzing...';
+        setResult('🔄 AI model processing your image...<br><small>Please wait (2-5 seconds)</small>', 'info');
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const res = await fetch("/recognize-face", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setResult(`
+                    ❌ <strong>Server Error</strong><br>
+                    ${data.error || `HTTP ${res.status}`}<br>
+                    <small>Check console (F12) for details</small>
+                `, 'error');
+                return;
+            }
+
+            // 🔥 PERFECT MATCH DISPLAY
+            if (data.found && data.person) {
+                const p = data.person;
+                const conf = (data.confidence * 100).toFixed(1);
+                setResult(`
+                    🎉 <strong>PERFECT MATCH FOUND!</strong><br><br>
+                    <strong>ID:</strong> <span style="color:#48bb78;font-size:1.3em;">${data.id}</span><br>
+                    <strong>Name:</strong> <span style="color:#48bb78;font-size:1.3em;">${p.name}</span><br>
+                    <strong>Age:</strong> ${p.age}<br>
+                    <strong>Email:</strong> ${p.email}<br>
+                    <strong>Mobile:</strong> ${p.mobile}<br><br>
+                    <strong>AI Confidence:</strong> <span style="color:#48bb78;font-weight:bold;">${conf}%</span><br>
+                    <div class="debug-info">
+                        Model → Normalized ID: ${data.id} | Backend processing: ✅
+                    </div>
+                `, 'found');
+                return;
+            }
+
+            // No match - detailed debug info
+            const conf = (data.confidence !== null && data.confidence !== undefined)
+                ? (data.confidence * 100).toFixed(1) + '%'
+                : 'N/A';
+            const predictedId = data.raw_model_id || data.id || 'unknown';
+            setResult(`
+                ℹ️ <strong>No database match found</strong><br><br>
+                <strong>AI Confidence:</strong> ${conf}<br>
+                <strong>Predicted ID:</strong> <code>${predictedId}</code><br>
+                ${data.message || 'Person not in database (C1,C2,Aishwarya...)'}
+                <div class="debug-info">
+                    Database has ${window.dbSize || '?'} people | Try registering first
+                </div>
+            `, 'info');
+
+        } catch (error) {
+            console.error('Recognition error:', error);
+            setResult(`
+                ❌ <strong>Connection failed</strong><br>
+                ${error.message}<br>
+                <small>Check if backend is running (python app.py)</small>
+            `, 'error');
+        } finally {
+            recognizeBtn.disabled = false;
+            recognizeBtn.innerHTML = '🔄 Try Another Photo';
+        }
+    });
+});
+</script>
+</body>
+</html>

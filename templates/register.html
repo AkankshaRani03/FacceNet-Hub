@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Register Person - Live Camera</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2d3748; overflow-x: hidden;
+        }
+        .container {
+            max-width: 900px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 2rem;
+        }
+        .header {
+            text-align: center; padding: 2rem 0;
+        }
+        .header h1 {
+            font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;
+        }
+        .form-section {
+            background: rgba(255,255,255,0.95); border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .form-group { margin-bottom: 1.8rem; }
+        label { 
+            display: block; font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 0.8rem;
+        }
+        input[type="text"], input[type="number"], input[type="email"], input[type="tel"] {
+            width: 100%; padding: 15px 20px; font-size: 1rem; border: 2px solid #e2e8f0; border-radius: 12px;
+            background: white; color: #2d3748; transition: all 0.3s; font-family: inherit;
+        }
+        input:focus {
+            outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .camera-section {
+            text-align: center; background: #f8fafc; border-radius: 16px; padding: 2rem; border: 2px dashed #cbd5e0;
+        }
+        #cameraVideo {
+            width: 100%; max-width: 450px; height: 338px; border-radius: 12px; border: 3px solid #667eea;
+            box-shadow: 0 10px 30px rgba(102,126,234,0.2); background: #000;
+        }
+        #capturedCanvas {
+            width: 100%; max-width: 450px; height: 338px; border-radius: 12px; border: 3px solid #48bb78;
+            box-shadow: 0 10px 30px rgba(72,187,120,0.3); display: none; margin-top: 1rem;
+        }
+        button {
+            width: 100%; max-width: 350px; padding: 16px 32px; font-size: 1.1rem; font-weight: 600; color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(102,126,234,0.3); font-family: inherit;
+        }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(102,126,234,0.4); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; background: #a0aec0; }
+        .capture-btn {
+            max-width: 250px; background: linear-gradient(135deg, #48bb78 0%, #68d391 100%);
+            box-shadow: 0 8px 25px rgba(72,187,120,0.3);
+        }
+        .capture-btn:hover { box-shadow: 0 12px 35px rgba(72,187,120,0.4); }
+        #status {
+            min-height: 100px; padding: 2rem; background: rgba(255,255,255,0.8); border-radius: 16px; text-align: center;
+            font-size: 1.1rem; border-left: 4px solid #667eea; margin-top: 1rem;
+        }
+        #status.success { border-left-color: #48bb78; background: rgba(72,187,120,0.1); }
+        #status.error { border-left-color: #f56565; background: rgba(245,101,101,0.1); color: #742a2a; }
+        .loading {
+            display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s infinite; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .back-btn { text-align: center; margin-top: 2rem; }
+        .back-btn a { text-decoration: none; }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .form-section { padding: 2rem 1.5rem; }
+            #cameraVideo, #capturedCanvas { max-width: 100%; height: 250px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👤 Register New Person</h1>
+            <p>Fill details and capture live photo using camera</p>
+        </div>
+
+        <form class="form-section" id="registerForm">
+            <div class="form-group">
+                <label>🔑 Person ID <span style="color: #e53e3e;">*</span></label>
+                <input type="text" id="personID" placeholder="C12 (Unique ID)" maxlength="10" required>
+            </div>
+
+            <div class="form-group">
+                <label>👤 Full Name <span style="color: #e53e3e;">*</span></label>
+                <input type="text" id="name" placeholder="Enter full name" required>
+            </div>
+
+            <div class="form-group">
+                <label>📅 Age</label>
+                <input type="number" id="age" min="1" max="120" placeholder="Enter age">
+            </div>
+
+            <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" id="email" placeholder="example@gmail.com">
+            </div>
+
+            <div class="form-group">
+                <label>📱 Mobile</label>
+                <input type="tel" id="mobile" placeholder="10-digit number">
+            </div>
+
+            <!-- CAMERA SECTION -->
+            <div class="camera-section">
+                <label style="font-size: 1.3rem; font-weight: 600; margin-bottom: 1.5rem; display: block;">
+                    📸 Live Camera Capture
+                </label>
+                <video id="cameraVideo" autoplay playsinline muted></video>
+                <br><br>
+                <button type="button" id="captureBtn" class="capture-btn" disabled>📷 Capture Face</button>
+                <canvas id="capturedCanvas"></canvas>
+            </div>
+        </form>
+
+        <div style="text-align: center;">
+            <button id="registerBtn" disabled>🚀 Complete Registration</button>
+        </div>
+
+        <div id="status">Start by allowing camera access and filling required fields...</div>
+
+        <div class="back-btn">
+            <a href="/">
+                <button>← Back to Dashboard</button>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const personID = document.getElementById('personID');
+        const nameInput = document.getElementById('name');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const captureBtn = document.getElementById('captureBtn');
+        const capturedCanvas = document.getElementById('capturedCanvas');
+        const registerBtn = document.getElementById('registerBtn');
+        const status = document.getElementById('status');
+        let mediaStream = null;
+        let imageCaptured = false;
+
+        // 1. Initialize Camera
+        async function initCamera() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' }
+                });
+                cameraVideo.srcObject = mediaStream;
+                captureBtn.disabled = false;
+                status.innerHTML = '✅ Camera ready! Click "Capture Face" when ready.';
+            } catch(err) {
+                status.innerHTML = '❌ Camera access denied. Check permissions.';
+                console.error('Camera error:', err);
+            }
+        }
+
+        // 2. Capture Image
+        captureBtn.addEventListener('click', () => {
+            capturedCanvas.width = 640;
+            capturedCanvas.height = 480;
+            const ctx = capturedCanvas.getContext('2d');
+            ctx.drawImage(cameraVideo, 0, 0, 640, 480);
+            capturedCanvas.style.display = 'block';
+            imageCaptured = true;
+            status.innerHTML = '✅ Face captured successfully!';
+            checkReady();
+        });
+
+        // 3. Check if ready to register
+        function checkReady() {
+            const hasID = personID.value.trim();
+            const hasName = nameInput.value.trim();
+            registerBtn.disabled = !(hasID && hasName && imageCaptured);
+        }
+
+        // Watch form changes
+        personID.addEventListener('input', checkReady);
+        nameInput.addEventListener('input', checkReady);
+
+        // 4. Register Person
+        registerBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+            formData.append('id', personID.value.trim());
+            formData.append('name', nameInput.value.trim());
+            formData.append('age', document.getElementById('age').value || '');
+            formData.append('email', document.getElementById('email').value || '');
+            formData.append('mobile', document.getElementById('mobile').value || '');
+            
+            // Convert canvas to blob
+            capturedCanvas.toBlob((blob) => {
+                formData.append('image', blob, 'face.png');
+                
+                status.innerHTML = '<div class="loading"></div>Registering...';
+                registerBtn.disabled = true;
+
+                fetch('/register-person', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        status.className = 'error';
+                        status.innerHTML = `❌ ${data.error}`;
+                    } else {
+                        status.className = 'success';
+                        status.innerHTML = `✅ ${data.message}<br><small>Added to database!</small>`;
+                        // Reset form
+                        personID.value = nameInput.value = '';
+                        capturedCanvas.style.display = 'none';
+                        imageCaptured = false;
+                        registerBtn.disabled = true;
+                    }
+                })
+                .catch(err => {
+                    status.className = 'error';
+                    status.innerHTML = '❌ Registration failed. Try again.';
+                    console.error(err);
+                })
+                .finally(() => {
+                    registerBtn.disabled = false;
+                });
+            }, 'image/jpeg', 0.9);
+        });
+
+        // Start
+        initCamera();
+        checkReady();
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

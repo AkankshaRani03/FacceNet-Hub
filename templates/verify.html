@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Face Verification</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2d3748; 
+            overflow-x: hidden;
+        }
+        .container { 
+            max-width: 1100px; margin: 0 auto; padding: 2rem; 
+            display: flex; flex-direction: column; gap: 2rem; 
+        }
+        .header { 
+            text-align: center; padding: 2rem 0; 
+        }
+        .header h1 { 
+            font-size: 2.5rem; font-weight: 700; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            margin-bottom: 0.5rem; 
+        }
+        .header p { font-size: 1.1rem; color: #64748b; }
+        .section { 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 20px; padding: 2.5rem; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .dual-layout { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; 
+        }
+        @media (max-width: 768px) { 
+            .dual-layout { grid-template-columns: 1fr; } 
+        }
+        .image-container { text-align: center; }
+        .preview { 
+            width: 100%; max-width: 380px; height: 285px; object-fit: cover; 
+            border-radius: 16px; border: 3px solid #e2e8f0; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; margin-top: 1rem;
+        }
+        .preview.show { display: block; border-color: #48bb78; }
+        .file-input-wrapper { 
+            position: relative; display: inline-block; margin-bottom: 1rem; 
+        }
+        .file-input-wrapper input[type="file"] { 
+            position: absolute; left: -9999px; opacity: 0; width: 1px; height: 1px; 
+        }
+        .custom-file-btn { 
+            padding: 14px 32px; font-size: 1rem; font-weight: 600; color: white; 
+            background: linear-gradient(135deg, #48bb78 0%, #68d391 100%); 
+            border: none; border-radius: 16px; cursor: pointer; transition: all 0.3s; 
+            box-shadow: 0 8px 25px rgba(72,187,120,0.3); display: inline-block;
+        }
+        .custom-file-btn:hover { 
+            transform: translateY(-2px); box-shadow: 0 12px 35px rgba(72,187,120,0.4); 
+        }
+        #verifyBtn { 
+            padding: 18px 40px; font-size: 1.1rem; font-weight: 600; color: white; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            border: none; border-radius: 16px; cursor: pointer; transition: all 0.3s; 
+            box-shadow: 0 10px 30px rgba(102,126,234,0.3); width: 100%; max-width: 400px; 
+            margin: 0 auto; display: block;
+        }
+        #verifyBtn:hover:not(:disabled) { 
+            transform: translateY(-3px); box-shadow: 0 15px 40px rgba(102,126,234,0.4); 
+        }
+        #verifyBtn:disabled { 
+            opacity: 0.6; cursor: not-allowed; transform: none; 
+        }
+        #verifyResult { 
+            min-height: 120px; padding: 2rem; background: rgba(255,255,255,0.8); 
+            border-radius: 20px; text-align: center; font-size: 1.2rem; 
+            border-left: 5px solid #667eea; margin-top: 1rem;
+        }
+        #verifyResult.match { 
+            border-left-color: #48bb78; background: rgba(72,187,120,0.15); color: #1a5f2f; 
+        }
+        #verifyResult.nomatch { 
+            border-left-color: #f56565; background: rgba(245,101,101,0.15); color: #742a2a; 
+        }
+        .loading { 
+            display: inline-block; width: 24px; height: 24px; 
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; 
+            border-top-color: #fff; animation: spin 1s infinite; margin-right: 10px; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .back-btn { text-align: center; margin-top: 2rem; }
+        .back-btn a { text-decoration: none; }
+        .back-btn button { 
+            padding: 16px 32px; font-size: 1.05rem; font-weight: 600; color: white; 
+            background: linear-gradient(135deg, #4c51bf 0%, #63b3ed 100%); 
+            border: none; border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); 
+            box-shadow: 0 10px 30px rgba(76,81,191,0.25);
+        }
+        .back-btn button:hover { 
+            transform: translateY(-4px); box-shadow: 0 20px 40px rgba(76,81,191,0.35); 
+        }
+        h2 { font-size: 1.6rem; font-weight: 600; color: #2d3748; margin-bottom: 1.5rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Face Verification</h1>
+            <p>Get instant verification results with confidence scores for secure access.</p>
+        </div>
+
+        <div class="section">
+            <h2>Upload Face Photos</h2>
+            <div class="dual-layout">
+                <div class="image-container">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file1" accept="image/*">
+                        <label for="file1" class="custom-file-btn">📁 Photo 1</label>
+                    </div>
+                    <img id="preview1" class="preview" alt="Preview 1">
+                </div>
+                
+                <div class="image-container">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file2" accept="image/*">
+                        <label for="file2" class="custom-file-btn">📁 Photo 2</label>
+                    </div>
+                    <img id="preview2" class="preview" alt="Preview 2">
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <button id="verifyBtn" disabled>🔍 Verify Face Match</button>
+        </div>
+
+        <div class="section">
+            <h2>Verification Result</h2>
+            <div id="verifyResult">Upload two clear face photos above, then click Verify!</div>
+        </div>
+
+        <div class="back-btn">
+            <a href="/">
+                <button>← Back to Dashboard</button>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const file1 = document.getElementById('file1');
+        const file2 = document.getElementById('file2');
+        const preview1 = document.getElementById('preview1');
+        const preview2 = document.getElementById('preview2');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const verifyResult = document.getElementById('verifyResult');
+
+        let imagesReady = 0;
+
+        // Image upload handlers (PERFECT WORKING)
+        file1.addEventListener('change', function() {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview1.src = e.target.result;
+                preview1.classList.add('show');
+                imagesReady++;
+                updateButton();
+            };
+            if (this.files[0]) reader.readAsDataURL(this.files[0]);
+        });
+
+        file2.addEventListener('change', function() {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview2.src = e.target.result;
+                preview2.classList.add('show');
+                imagesReady++;
+                updateButton();
+            };
+            if (this.files[0]) reader.readAsDataURL(this.files[0]);
+        });
+
+        function updateButton() {
+            if (imagesReady === 2) {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '🚀 Verify Face Match';
+            }
+        }
+
+        // REAL Face Verification via Backend AI model
+        verifyBtn.addEventListener('click', async function() {
+            if (!file1.files[0] || !file2.files[0]) {
+                verifyResult.className = 'nomatch';
+                verifyResult.innerHTML = 'Please upload both face images first.';
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<div class="loading"></div>Analyzing...';
+            verifyResult.innerHTML = '<div class="loading"></div>🔬 Verifying via AI model...';
+            verifyResult.className = '';
+
+            const formData = new FormData();
+            formData.append('image1', file1.files[0]);
+            formData.append('image2', file2.files[0]);
+
+            try {
+                const response = await fetch('/verify-face', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || 'Verification API failed');
+                }
+
+                const data = await response.json();
+
+                if (data.same) {
+                    verifyResult.className = 'match';
+                    verifyResult.innerHTML = `
+                        <div style="font-size: 2.5rem; color: #48bb78; margin: 1rem 0;">✅</div>
+                        <strong>FACE MATCH CONFIRMED!</strong><br>
+                        ${data.message}<br>
+                        <small>Model(1): ${data.model.id1} (${(data.model.confidence1*100).toFixed(1)}%)</small><br>
+                        <small>Model(2): ${data.model.id2} (${(data.model.confidence2*100).toFixed(1)}%)</small>
+                    `;
+                } else {
+                    verifyResult.className = 'nomatch';
+                    verifyResult.innerHTML = `
+                        <div style="font-size: 2.5rem; color: #f56565; margin: 1rem 0;">❌</div>
+                        <strong>NO FACE MATCH</strong><br>
+                        ${data.message}<br>
+                        <small>Model(1): ${data.model.id1} (${(data.model.confidence1*100).toFixed(1)}%)</small><br>
+                        <small>Model(2): ${data.model.id2} (${(data.model.confidence2*100).toFixed(1)}%)</small>
+                    `;
+                }
+
+            } catch (err) {
+                verifyResult.className = 'nomatch';
+                verifyResult.innerHTML = `Error: ${err.message}`;
+                console.error('verify-face API error', err);
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '🔄 Verify Again';
+            }
+        });
+
+        // keep calculateSimilarity for fallback or future use
+        function calculateSimilarity() {
+            return 50;
+        }
+    </script>
+</body>
+</html>
