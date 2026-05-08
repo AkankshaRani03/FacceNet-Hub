@@ -211,10 +211,10 @@ def home():
     return send_from_directory('.', 'index.html')
 @app.route("/recognize")
 def recognize_page():
-    return render_template("recognize.html")
+    return send_from_directory('.', 'recognize.html')
 @app.route("/verify")
 def verify_page():
-    return render_template("verify.html")
+    return send_from_directory('.', 'verify.html')
 
 @app.route('/verify-face', methods=['POST'])
 def verify_face_endpoint():
@@ -297,13 +297,13 @@ def verify_face_endpoint():
 
 @app.route("/search")
 def search_page():
-    return render_template("search.html")
+    return send_from_directory('.', 'search.html')
 @app.route("/register")
 def register_page():
-    return render_template("register.html")
+    return send_from_directory('.', 'register.html')
 @app.route('/multiface')
 def multiface():
-    return render_template('multiface.html')
+    return send_from_directory('.', 'multiface.html')
 # 🔥 MAIN RECOGNITION ENDPOINT (Your HTML calls this!)
 @app.route('/recognize-face', methods=['POST'])
 def recognize_face_endpoint():
