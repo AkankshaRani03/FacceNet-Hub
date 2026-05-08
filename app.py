@@ -208,7 +208,7 @@ def map_model_to_database(model_id, confidence):
     return None
 @app.route("/")
 def home():
-    return render_template("home.html")
+    return send_from_directory('.', 'index.html')
 @app.route("/recognize")
 def recognize_page():
     return render_template("recognize.html")
